@@ -1,0 +1,20 @@
+PARAMS = {
+    "action_range": 1,
+    "alpha_actor": 0.0005,
+    "alpha_critic": 0.001,
+    "gamma": 0.99,
+    "batch_size": 128,
+    "buffer_size": 50000,
+    "tau": 0.005,
+    "train_begin": 2000,
+    "episodes": 30000,
+    "steps_per_episode": 2000,
+    "epochs": 20,
+    "episodes_to_print": 100,
+    "episodes_to_save": 300,
+    "path": "./models/box",
+    "load_path_critic": "./models/box_critic_model",
+    "load_path_actor": "./models/box_actor_model",
+    "reward_path": "./models/box_reward.txt",
+    "load_models": True
+}

@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from DDPG.updating_model import UpdatingModel
+from DDPG.agent.updating_model import UpdatingModel
 
 
 class ActorModel(nn.Module, UpdatingModel):
-    def __init__(self, alpha, tau, input, output):
+    def __init__(self, alpha, tau, input, output, action_range):
         super(ActorModel, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(input, 128),
@@ -13,6 +13,7 @@ class ActorModel(nn.Module, UpdatingModel):
             nn.ReLU(),
             nn.Linear(64, output)
         )
+        self.action_range = action_range
         self.tau = tau
         self.alpha = alpha
         self.optimizer = torch.optim.Adam(self.parameters(), lr=alpha)
@@ -20,7 +21,7 @@ class ActorModel(nn.Module, UpdatingModel):
     def forward(self, x):
         # print(x)
         out = self.model(x)
-        return torch.tanh(out)
+        return torch.tanh(out) * self.action_range
 
 
 

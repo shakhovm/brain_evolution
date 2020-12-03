@@ -12,9 +12,9 @@ PARAMS = {
     "epochs": 13,
     "episodes_to_print": 100,
     "episodes_to_save": 300,
-    "path": "./models/model",
-    "load_path_critic": "./models/model_critic_model",
-    "load_path_actor": "./models/model_actor_model",
-    "reward_path": "./models/pendulum_reward.txt",
+    "path": "./DDPG/models/model",
+    "load_path_critic": "./DDPG/models/model_critic_model",
+    "load_path_actor": "./DDPG/models/model_actor_model",
+    "reward_path": "./DDPG/models/pendulum_reward.txt",
     "load_models": True
 }

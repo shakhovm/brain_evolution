@@ -1,11 +1,10 @@
-from DDPG.critic_model import CriticModel
-from DDPG.actor_model import ActorModel
+from DDPG.agent.critic_model import CriticModel
+from DDPG.agent.actor_model import ActorModel
 import gym
 import torch
 import torch.nn.functional as F
-from DDPG.replay_buffer import ReplayBuffer
+from DDPG.agent.replay_buffer import ReplayBuffer
 from stochastic.processes.noise import GaussianNoise
-from DDPG.noise import OrnsteinUhlenbeckActionNoise
 
 class DDPGAgent:
     def __init__(
@@ -33,20 +32,16 @@ class DDPGAgent:
     ):
 
         # Model Creation
-        self.critic_model = CriticModel(alpha_critic, tau, state_n, action_n, action_range)#.cuda()
+        self.critic_model = CriticModel(alpha_critic, tau, state_n, action_n)
 
-        self.actor_model = ActorModel(alpha_actor, tau, state_n, action_n)#.cuda()
+        self.actor_model = ActorModel(alpha_actor, tau, state_n, action_n, action_range)
         if load_models:
             self.actor_model.load_state_dict(torch.load(load_path_actor))
             self.critic_model.load_state_dict(torch.load(load_path_critic))
-        self.critic_model_target = CriticModel(alpha_critic, tau, state_n, action_n, action_range)  # .cuda()
+        self.critic_model_target = CriticModel(alpha_critic, tau, state_n, action_n)
         self.critic_model_target.load_state_dict(self.critic_model.state_dict())
-        self.actor_model_target = ActorModel(alpha_actor, tau, state_n, action_n) #.cuda()
+        self.actor_model_target = ActorModel(alpha_actor, tau, state_n, action_n, action_range)
         self.actor_model_target.load_state_dict(self.actor_model.state_dict())
-        # self.critic_model_target.to(torch.device('cuda:0'))
-        # self.actor_model_target.to(torch.device('cuda:0'))
-        # self.critic_model.to(torch.device('cuda:0'))
-        # self.actor_model.to(torch.device('cuda:0'))
 
         # Params definitions
         self.episodes = episodes
@@ -67,7 +62,7 @@ class DDPGAgent:
         self.replay_buffer = ReplayBuffer(buffer_size)
 
         # Noise
-        self.noise = OrnsteinUhlenbeckActionNoise(action_n)
+        self.noise = GaussianNoise()
 
     def train_models(self):
         for epoch in range(self.epochs):

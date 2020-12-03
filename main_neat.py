@@ -1,31 +1,12 @@
-import numpy as np
+from NEAT.model import Phenotype
+from NEAT.genotype import Genotype
+
 import torch
-from torch.autograd import Variable
-import torch.nn as nn
-import torch.nn.functional as F
 import gym
+from random import uniform
 from math import pi
 from time import sleep
 
-class Brain(torch.nn.Module):
-        def __init__(self, input_size, hidden_size):
-            super(Brain, self).__init__()
-            self.input_size = input_size
-            self.hidden_size  = hidden_size
-            self.fc1 = torch.nn.Linear(self.input_size, self.hidden_size)
-            torch.nn.init.xavier_uniform(self.fc1.weight)
-            self.relu = torch.nn.ReLU()
-            self.fc2 = torch.nn.Linear(self.hidden_size, 1)
-            torch.nn.init.xavier_uniform(self.fc2.weight)
-            self.sigmoid = torch.nn.Sigmoid()     
-        
-        def forward(self, x):
-            hidden = self.fc1(x)
-            relu = self.relu(hidden)
-            output = self.fc2(relu)
-            output = self.sigmoid(output)
-            return output
-        
 def classify(v):
     return 1 if v > 0.5 else 0
 
@@ -39,9 +20,10 @@ def demo(model):
     for _ in range(10000):
         env.render()
         sleep(1/30)
-        
-        val = model.forward(torch.FloatTensor( data ))
+    
+        val = model.forward(torch.FloatTensor( data ).unsqueeze(0) )
         val = val.detach().numpy()
+        print(val)
         val = classify(val)
     
         data = env.step(val)[0]
@@ -51,29 +33,40 @@ def demo(model):
     env.close()
 
 if __name__ == '__main__':
-    MODE = 'train'
+    MODE = 'vizualise'
+    
+    gt = Genotype(4,1,1)
+    for i in range(4):
+        gt.add_edge(i, 4, uniform(0, 1))
+    gt.add_edge(4, 5, uniform(0, 1))
+    
+    for _ in range(10):
+        r = uniform(0,1)
+        if r < 0.1: gt.add_rand_node()
+        elif 0.1 <= r <= 0.4: gt.add_rand_edge()
+        elif 0.4 < r < 0.8: gt.mutate_rand_edge()
+        else: gt.mutate_rand_weight()
+    
+    for x in gt.get_nodes():print(x)
+    for x in gt.get_edges():print(x)
     
     if MODE == 'train':
-        iters = 5000
+        iters = 100
         half_width = 2.4
         score = 0
-        brain = Brain(4,2)
-        best_weights = brain.state_dict()
+        model = Phenotype(gt)
         best_score = 0
-
-        # brain.load_state_dict(torch.load('model_best'))
 
         env = gym.make('CartPole-v0')
         while iters:
             score = 0
             env.reset()
-            # env.render()
             iter_data = env.step(0)[0]
             for _ in range(1000):
                 # env.render()
                 # sleep(1/60)
 
-                val = brain.forward(torch.FloatTensor( iter_data ))
+                val = model(torch.FloatTensor( iter_data ).unsqueeze(0))
                 val = val.detach().numpy()
                 val = classify(val)
 
@@ -84,8 +77,16 @@ if __name__ == '__main__':
                 if not is_alive(iter_angle, iter_pos):
                     if score > best_score:
                         best_score = score
-                        best_weights = brain.state_dict()
-                    brain = Brain(4,2)
+                        best_weights = model.state_dict()
+                    
+                    r = uniform(0,1)
+                    if r < 0.1: gt.add_rand_node()
+                    elif 0.1 <= r <= 0.4: gt.add_rand_edge()
+                    elif 0.4 < r < 0.8: gt.mutate_rand_edge()
+                    else: gt.mutate_rand_weight()
+                        
+                    model = Phenotype(gt)
+                    
                     print("best score: {}; {} iters left".format(best_score, iters))
                     break
                 score += 1
@@ -93,9 +94,11 @@ if __name__ == '__main__':
             iters -= 1
 
         print(best_score)
-        torch.save(brain.state_dict(), 'model')
+        torch.save(model.state_dict(), 'model')
+        for x in gt.get_nodes():print(x)
+        for x in gt.get_edges():print(x)
     elif MODE == 'vizualise':
-        brain = Brain(4,2)
-        brain.load_state_dict(torch.load('model'))
-        demo(brain)
-        
+        model = Phenotype(gt)
+#         model.load_state_dict(torch.load('model'))
+        demo(model)
+    
